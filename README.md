@@ -1,9 +1,9 @@
-# DTVTableView
+# DynamicTableView
 
-[![CI Status](http://img.shields.io/travis/tomquist/DTVTableView.svg?style=flat)](https://travis-ci.org/tomquist/DTVTableView)
-[![Version](https://img.shields.io/cocoapods/v/DTVTableView.svg?style=flat)](http://cocoadocs.org/docsets/DTVTableView)
-[![License](https://img.shields.io/cocoapods/l/DTVTableView.svg?style=flat)](http://cocoadocs.org/docsets/DTVTableView)
-[![Platform](https://img.shields.io/cocoapods/p/DTVTableView.svg?style=flat)](http://cocoadocs.org/docsets/DTVTableView)
+[![CI Status](http://img.shields.io/travis/tomquist/DynamicTableView.svg?style=flat)](https://travis-ci.org/tomquist/DynamicTableView)
+[![Version](https://img.shields.io/cocoapods/v/DynamicTableView.svg?style=flat)](http://cocoadocs.org/docsets/DynamicTableView)
+[![License](https://img.shields.io/cocoapods/l/DynamicTableView.svg?style=flat)](http://cocoadocs.org/docsets/DynamicTableView)
+[![Platform](https://img.shields.io/cocoapods/p/DynamicTableView.svg?style=flat)](http://cocoadocs.org/docsets/DynamicTableView)
 
 Table view rewrite without the need to specify the table view cell height.
 
@@ -15,7 +15,7 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 
 ## Installation
 
-DTVTableView is available through [CocoaPods](http://cocoapods.org). To install
+DynamicTableView is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
     pod "DTVTableView"
