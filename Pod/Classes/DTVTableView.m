@@ -136,7 +136,8 @@
     [_currentViews removeAllObjects];
     NSInteger i = 0;
     CGFloat heightSum = 0;
-    while (y < self.bounds.size.height) {
+    NSInteger rowCount = [self.dataSource numberOfRowsInTableView:self];
+    while (y < self.bounds.size.height && row < rowCount) {
         UIView *v = [self.dataSource tableView:self cellForRow:row convertView:nil];
         [_currentViews addObject:v];
         CGRect f = v.frame;

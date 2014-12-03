@@ -4,8 +4,6 @@ target 'DTVTableView', :exclusive => true do
   pod "DTVTableView", :path => "../"
 end
 
-#target 'Tests', :exclusive => true do
-#  pod "DTVTableView", :path => "../"
-#
-#
-#end
+target 'Tests', :exclusive => true do
+  pod "DTVTableView", :path => "../"
+end
