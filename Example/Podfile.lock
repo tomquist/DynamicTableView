@@ -9,6 +9,6 @@ EXTERNAL SOURCES:
     :path: ../
 
 SPEC CHECKSUMS:
-  DTVTableView: 0af5e50acf4edb5d589a365dc5d1f6af00055ae9
+  DTVTableView: 249a283bf6637a81c2cabcb4d79d8a3b98a0205b
 
 COCOAPODS: 0.35.0
