@@ -1,6 +1,6 @@
 source 'https://github.com/CocoaPods/Specs.git'
 
-target 'DTVTableView', :exclusive => true do
+target 'DTVTableViewExample', :exclusive => true do
   pod "DTVTableView", :path => "../"
 end
 
