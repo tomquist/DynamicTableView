@@ -114,6 +114,66 @@
     XCTAssertEqual(addedCells, (int)ceilf(self.tableView.bounds.size.height/100), "Only visible cells should be added");
 }
 
+- (void)testManyRowsSameHeightScrollOnePage {
+    NSMutableArray *cells = [NSMutableArray array];
+    for (NSInteger i = 0; i<100; i++) {
+        UITableViewCell *cell = [[UITableViewCell alloc] init];
+        cell.frame = CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100);
+        [cells addObject:cell];
+    }
+    self.numberOfRows = cells.count;
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
+        return cells[row];
+    };
+    self.tableView.dataSource = self;
+
+
+    self.tableView.contentOffset = CGPointMake(0, 300);
+
+    __block NSInteger addedCells = 0;
+    [cells enumerateObjectsUsingBlock:^(UITableViewCell *cell, NSUInteger idx, BOOL *stop) {
+        if (cell.superview == nil) {
+            XCTAssertTrue(idx < 3 || idx >= 6, "Views which are not within bounds shouldn't be added");
+        } else {
+            addedCells++;
+            CGRect viewFrame = ((UIView *)cells[idx]).frame;
+            CGRect expectedFrame = CGRectMake(0, idx * 100, self.tableView.bounds.size.width, 100);
+            XCTAssertEqualObjects(NSStringFromCGRect(viewFrame), NSStringFromCGRect(expectedFrame), "Frame of view should be correct");
+        }
+    }];
+    XCTAssertEqual(addedCells, (int)ceilf(self.tableView.bounds.size.height/100), "Only visible cells should be added");
+}
+
+- (void)testManyRowsSameHeightScrollTwoPages {
+    NSMutableArray *cells = [NSMutableArray array];
+    for (NSInteger i = 0; i<100; i++) {
+        UITableViewCell *cell = [[UITableViewCell alloc] init];
+        cell.frame = CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100);
+        [cells addObject:cell];
+    }
+    self.numberOfRows = cells.count;
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
+        return cells[row];
+    };
+    self.tableView.dataSource = self;
+
+
+    self.tableView.contentOffset = CGPointMake(0, 600);
+
+    __block NSInteger addedCells = 0;
+    [cells enumerateObjectsUsingBlock:^(UITableViewCell *cell, NSUInteger idx, BOOL *stop) {
+        if (cell.superview == nil) {
+            XCTAssertTrue(idx < 6 || idx >= 9, "Views which are not within bounds shouldn't be added");
+        } else {
+            addedCells++;
+            CGRect viewFrame = ((UIView *)cells[idx]).frame;
+            CGRect expectedFrame = CGRectMake(0, idx * 100, self.tableView.bounds.size.width, 100);
+            XCTAssertEqualObjects(NSStringFromCGRect(viewFrame), NSStringFromCGRect(expectedFrame), "Frame of view should be correct");
+        }
+    }];
+    XCTAssertEqual(addedCells, (int)ceilf(self.tableView.bounds.size.height/100), "Only visible cells should be added");
+}
+
 /*- (void)testPerformanceExample {
     // This is an example of a performance test case.
     [self measureBlock:^{

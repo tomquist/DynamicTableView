@@ -1,0 +1,5 @@
+coverage_service: coveralls
+xcodeproj: Example/DTVTableView.xcodeproj
+source_directory: Pod/Classes
+ignore:
+  - Example/*

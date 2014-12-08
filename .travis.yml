@@ -1,10 +1,11 @@
-# references:
-# * http://www.objc.io/issue-6/travis-ci.html
-# * https://github.com/supermarin/xcpretty#usage
-
 language: objective-c
-before_install: cd Example && pod install && cd -
-install:
-- gem install xcpretty --no-rdoc --no-ri --no-document --quiet
+before_install:
+  - bundle install
+  - cd Example && bundle exec pod install && cd -
+cache:
+  bundler: true
+  directories: Example/Pods
 script:
-- set -o pipefail && xcodebuild test -workspace Example/DTVTableView.xcworkspace -scheme DTVTableView -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO | xcpretty -c
+  - bundle exec pod lib testing
+after_success:
+  - bundle exec slather coverage -t

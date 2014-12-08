@@ -46,7 +46,8 @@
     UILabel *label = (UILabel *)reuseableView;
     label.textAlignment = NSTextAlignmentCenter;
     label.text = [NSString stringWithFormat:@"%d", row];
-    label.font = [UIFont systemFontOfSize:((arc4random() % (row+1))+ 10)];
+   //label.font = [UIFont systemFontOfSize:((arc4random() % (row+1))+ 10)];
+    label.font = [UIFont systemFontOfSize:row];
     [label sizeToFit];
     /*if (row % 10 == 0) {
      ret.frame = CGRectMake(0, 0, tableView.frame.size.width, 400);

@@ -195,9 +195,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6003F589195388D20070C39A /* DTVTableView */ = {
+		6003F589195388D20070C39A /* DTVTableViewExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6003F5BF195388D20070C39A /* Build configuration list for PBXNativeTarget "DTVTableView" */;
+			buildConfigurationList = 6003F5BF195388D20070C39A /* Build configuration list for PBXNativeTarget "DTVTableViewExample" */;
 			buildPhases = (
 				7FB6394E4A330D87D0B03674 /* Check Pods Manifest.lock */,
 				6003F586195388D20070C39A /* Sources */,
@@ -209,7 +209,7 @@
 			);
 			dependencies = (
 			);
-			name = DTVTableView;
+			name = DTVTableViewExample;
 			productName = DTVTableView;
 			productReference = 6003F58A195388D20070C39A /* DTVTableView.app */;
 			productType = "com.apple.product-type.application";
@@ -262,7 +262,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6003F589195388D20070C39A /* DTVTableView */,
+				6003F589195388D20070C39A /* DTVTableViewExample */,
 				6003F5AD195388D20070C39A /* Tests */,
 			);
 		};
@@ -376,7 +376,7 @@
 /* Begin PBXTargetDependency section */
 		6003F5B4195388D20070C39A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6003F589195388D20070C39A /* DTVTableView */;
+			target = 6003F589195388D20070C39A /* DTVTableViewExample */;
 			targetProxy = 6003F5B3195388D20070C39A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -579,7 +579,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6003F5BF195388D20070C39A /* Build configuration list for PBXNativeTarget "DTVTableView" */ = {
+		6003F5BF195388D20070C39A /* Build configuration list for PBXNativeTarget "DTVTableViewExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6003F5C0195388D20070C39A /* Debug */,
