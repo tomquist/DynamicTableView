@@ -19,16 +19,16 @@
 @property (nonatomic, assign) id <DTVTableViewDataSource> dataSource;
 @property (nonatomic, assign) id <DTVTableViewDelegate> delegate;
 
+- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)reuseIdentifier;
+
 @end
 
 @protocol DTVTableViewDataSource <NSObject>
 
 - (NSInteger)numberOfRowsInTableView:(DTVTableView *)tableView;
 
-- (UITableViewCell *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row convertView:(UITableViewCell *)convertView;;
+- (UIView *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row reuseView:(UIView *)reuseableView;
 @optional
-- (NSInteger)tableView:(DTVTableView *)tableView itemViewTypeForRow:(NSInteger)row;
-
-- (NSInteger)numberOfViewTypesInTableView:(DTVTableView *)tableView;
+- (NSString *)tableView:(DTVTableView *)tableView reuseIdentifierForRow:(NSInteger)row;
 
 @end

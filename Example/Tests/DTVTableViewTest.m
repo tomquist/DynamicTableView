@@ -13,7 +13,7 @@
 @interface DTVTableViewTest : XCTestCase <DTVTableViewDataSource>
 
 @property (nonatomic, strong) DTVTableView *tableView;
-@property (nonatomic, copy) UITableViewCell *(^cellForRow)(DTVTableView *, NSInteger row, UITableViewCell *);
+@property (nonatomic, copy) UIView *(^cellForRow)(DTVTableView *, NSInteger row, UIView *);
 @property (nonatomic, assign) NSInteger numberOfRows;
 
 @end
@@ -36,7 +36,7 @@
     NSArray *cells = @[[[UITableViewCell alloc] init]];
     [cells[0] setFrame:CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100)];
     self.numberOfRows = cells.count;
-    self.cellForRow = ^UITableViewCell *(DTVTableView *tableView, NSInteger row, UITableViewCell *cell) {
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
         return cells[row];
     };
     self.tableView.dataSource = self;
@@ -53,7 +53,7 @@
     [cells[0] setFrame:CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100)];
     [cells[1] setFrame:CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100)];
     self.numberOfRows = cells.count;
-    self.cellForRow = ^UITableViewCell *(DTVTableView *tableView, NSInteger row, UITableViewCell *cell) {
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
         return cells[row];
     };
     self.tableView.dataSource = self;
@@ -74,7 +74,7 @@
     [cells[0] setFrame:CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 50)];
     [cells[1] setFrame:CGRectMake(0, 0, CGRectGetWidth(self.tableView.bounds), 100)];
     self.numberOfRows = cells.count;
-    self.cellForRow = ^UITableViewCell *(DTVTableView *tableView, NSInteger row, UITableViewCell *cell) {
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
         return cells[row];
     };
     self.tableView.dataSource = self;
@@ -96,7 +96,7 @@
         [cells addObject:cell];
     }
     self.numberOfRows = cells.count;
-    self.cellForRow = ^UITableViewCell *(DTVTableView *tableView, NSInteger row, UITableViewCell *cell) {
+    self.cellForRow = ^UIView *(DTVTableView *tableView, NSInteger row, UIView *reusableView) {
         return cells[row];
     };
     self.tableView.dataSource = self;
@@ -127,8 +127,8 @@
     return self.numberOfRows;
 }
 
-- (UITableViewCell *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row convertView:(UITableViewCell *)convertView {
-    return self.cellForRow(tableView, row, convertView);
+- (UIView *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row reuseView:(UIView *)reuseableView {
+    return self.cellForRow(tableView, row, reuseableView);
 }
 
 @end

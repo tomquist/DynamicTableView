@@ -8,6 +8,8 @@
 
 #import "DTVTableView.h"
 
+NSUInteger DTVMaxReusableViewCount = 3;
+
 @interface DTVMessageInterceptor : NSObject
 
 @property (nonatomic, assign) id receiver;
@@ -42,6 +44,24 @@
 
 @end
 
+
+@interface DTVTableViewItemHolder : NSObject
+@property (nonatomic, assign) NSInteger row;
+@property (nonatomic, strong) UIView *view;
+@property(nonatomic, copy) NSString *reuseIdentifier;
+@end
+
+@implementation DTVTableViewItemHolder
+
+- (instancetype)reuseWithView:(UIView *)view row:(NSInteger)row reuseIdentifier:(NSString *)reuseIdentifier {
+    _view = view;
+    _row = row;
+    _reuseIdentifier = reuseIdentifier;
+    return self;
+}
+
+@end
+
 @interface DTVTableView () <UIScrollViewDelegate> {
     NSInteger _numberOfRows;
     NSInteger _topVisibleRow;
@@ -54,6 +74,9 @@
     CGFloat _lastKnownAverageHeight;
     
     BOOL _scrolling;
+    NSMutableDictionary *_cellRegistry;
+    NSMutableDictionary *_reusableCells;
+    NSMutableArray *_reusableItemHolders;
 }
 
 @property (nonatomic, retain) DTVMessageInterceptor *delegateInterceptor;
@@ -97,9 +120,12 @@
     _topVisibleRow = 0;
     _topVisibleY = 0;
     _currentViews = [[NSMutableArray alloc] initWithCapacity:20];
+    _cellRegistry = [[NSMutableDictionary alloc] init];
+    _reusableCells = [[NSMutableDictionary alloc] init];
+    _reusableItemHolders = [[NSMutableArray alloc] init];
 }
 
-- (id<UITableViewDelegate>)delegate {
+- (id<DTVTableViewDelegate>)delegate {
     id delegate = [super delegate];
     if ([delegate isKindOfClass:[DTVMessageInterceptor class]]) {
         DTVMessageInterceptor *messageInterceptor = (DTVMessageInterceptor *)delegate;
@@ -108,7 +134,7 @@
     return delegate;
 }
 
-- (void)setDelegate:(id<UITableViewDelegate>)delegate {
+- (void)setDelegate:(id<DTVTableViewDelegate>)delegate {
     [super setDelegate:nil];
     _delegateInterceptor.receiver = delegate;
     [super setDelegate:(id<UIScrollViewDelegate>)_delegateInterceptor];
@@ -119,8 +145,68 @@
     [self reloadData];
 }
 
-- (void)didMoveToSuperview {
-    [super didMoveToSuperview];
+- (void)registerClass:(Class)viewClass forViewReuseIdentifier:(NSString *)reuseIdentifier {
+    _cellRegistry[reuseIdentifier] = viewClass;
+    _reusableCells[reuseIdentifier] = [NSMutableArray array];
+}
+
+- (DTVTableViewItemHolder *)dequeueItemHolder {
+    DTVTableViewItemHolder *itemHolder = [_reusableItemHolders lastObject];
+    if (itemHolder != nil) {
+        [_reusableItemHolders removeLastObject];
+    } else {
+        itemHolder = [[DTVTableViewItemHolder alloc] init];
+    }
+    return itemHolder;
+}
+
+- (void)enqueueReusableItemHolder:(DTVTableViewItemHolder *)itemHolder {
+    [_reusableItemHolders addObject:itemHolder];
+}
+
+- (void)enqueueReusableView:(UIView *)view forReuseIdentifier:(NSString *)reuseIdentifier {
+    NSMutableArray * array = _reusableCells[reuseIdentifier];
+    [array addObject:view];
+}
+
+- (UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier forRow:(NSInteger)row {
+    if (reuseIdentifier == nil) {
+        return nil;
+    }
+    UIView *view = nil;
+    NSMutableArray *reusableViews = _reusableCells[reuseIdentifier];
+    if (reusableViews != nil) {
+        view = [reusableViews lastObject];
+        if (view != nil) {
+            [reusableViews removeLastObject];
+            return view;
+        }
+        Class viewClass = _cellRegistry[reuseIdentifier];
+        view = [(UIView *) [viewClass alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width, 0)];
+    }
+    return view;
+}
+
+- (DTVTableViewItemHolder *)itemHolderForRow:(NSInteger)row onYPosition:(CGFloat)yPosition {
+    NSString *reuseIdentifier = nil;
+    if ([self.dataSource respondsToSelector:@selector(tableView:reuseIdentifierForRow:)]) {
+        reuseIdentifier = [self.dataSource tableView:self reuseIdentifierForRow:row];
+    }
+    UIView *reusableView = [self dequeueReusableViewWithIdentifier:reuseIdentifier forRow:row];
+    if (reusableView != nil) {
+        CGRect f = reusableView.frame;
+        f.origin = CGPointMake(0, yPosition);
+        f.size.width = self.bounds.size.width;
+        reusableView.frame = f;
+    }
+    UIView *view = [self.dataSource tableView:self cellForRow:row reuseView:reusableView];
+    CGRect f = view.frame;
+    f.origin = CGPointMake(0, yPosition);
+    f.size.width = self.bounds.size.width;
+    view.frame = f;
+    
+    DTVTableViewItemHolder *itemHolder = [[self dequeueItemHolder] reuseWithView:view row:row reuseIdentifier:reuseIdentifier];
+    return itemHolder;
 }
 
 - (void)reloadData {
@@ -128,45 +214,60 @@
     CGFloat y = 0;
     NSInteger row = 0;
     _lastKnownAverageHeight = 44;
-
-    for (UIView *v in _currentViews) {
-        [v removeFromSuperview];
+    
+    for (DTVTableViewItemHolder *itemHolder in _currentViews) {
+        [self prepareItemHolderForRemoval:itemHolder];
     }
     
     [_currentViews removeAllObjects];
-    NSInteger i = 0;
+    NSInteger count = 0;
     CGFloat heightSum = 0;
     NSInteger rowCount = [self.dataSource numberOfRowsInTableView:self];
     while (y < self.bounds.size.height && row < rowCount) {
-        UIView *v = [self.dataSource tableView:self cellForRow:row convertView:nil];
-        [_currentViews addObject:v];
-        CGRect f = v.frame;
-        f.origin = CGPointMake(0, y);
-        f.size.width = self.bounds.size.width;
-        v.frame = f;
+        DTVTableViewItemHolder *itemHolder = [self itemHolderForRow:row onYPosition:y];
+        [_currentViews addObject:itemHolder];
         
-        [v layoutIfNeeded];
-        
-        f = v.frame;
-        
-        [self addSubview:v];
-        heightSum += f.size.height;
-        y += f.size.height;
+        [self addSubview:itemHolder.view];
+        CGRect viewFrame = itemHolder.view.frame;
+        heightSum += viewFrame.size.height;
+        y += viewFrame.size.height;
         _bottomVisibleRow = row;
         row++;
-        i++;
+        count++;
         _bottomVisibleY = y;
     }
-    _lastKnownAverageHeight = heightSum / i;
+    _lastKnownAverageHeight = heightSum / count;
     self.contentSize = CGSizeMake(self.frame.size.width, _lastKnownAverageHeight * _numberOfRows);
 }
 
-- (void)fillViewFromCurrentTop {
+- (void)layoutSubviews {
+    [super layoutSubviews];
     
-}
-
-- (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
-    
+    if (self.contentSize.width != self.bounds.size.width) {
+        NSInteger count = 0;
+        CGFloat heightSum = 0;
+        CGFloat y = _topVisibleY;
+        for (DTVTableViewItemHolder *itemHolder in _currentViews) {
+            UIView *view = itemHolder.view;
+            CGRect frame = view.frame;
+            frame.origin.y = y;
+            frame.size.width = self.bounds.size.width;
+            view.frame = frame;
+            frame.size = [view sizeThatFits:frame.size];
+            frame.size.width = self.bounds.size.width;
+            view.frame = frame;
+            y += frame.size.height;
+            count++;
+            
+            heightSum += frame.size.height;
+            _bottomVisibleY = CGRectGetMaxY(frame);
+        }
+        if (count > 0) {
+            _lastKnownAverageHeight = _bottomVisibleY / count;
+            self.contentSize = CGSizeMake(self.frame.size.width, _lastKnownAverageHeight * _numberOfRows);
+        }
+        [self scrollViewDidScroll:self];
+    }
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -176,141 +277,149 @@
     
     if ([_currentViews count] == 0 && _numberOfRows > 0) {
         self.contentSize = CGSizeMake(self.frame.size.width, _lastKnownAverageHeight * _numberOfRows);
-        _topVisibleRow = ceilf(scrollY / _lastKnownAverageHeight);
+        _topVisibleRow = (NSInteger) ceilf(scrollY / _lastKnownAverageHeight);
         _topVisibleY = _topVisibleRow * _lastKnownAverageHeight;
         
         //NSLog(@"Adding row %i", _topVisibleRow);
-        UIView *v = [self.dataSource tableView:self cellForRow:_topVisibleRow convertView:nil];
-        CGRect f = v.frame;
-        f.size.width = self.bounds.size.width;
-        f.origin.y = _topVisibleY;
-        v.frame = f;
+        DTVTableViewItemHolder *itemHolder = [self itemHolderForRow:_topVisibleRow onYPosition:_topVisibleY];
+        UIView *view = itemHolder.view;
+        CGRect f = view.frame;
+        view.frame = f;
+        [self insertSubview:view atIndex:0];
         
-        [v layoutIfNeeded];
-        
-        f = v.frame;
-        v.frame = f;
-        [self insertSubview:v atIndex:0];
-        
-        [_currentViews insertObject:v atIndex:0];
+        [_currentViews insertObject:itemHolder atIndex:0];
         
         _bottomVisibleRow = _topVisibleRow;
         _bottomVisibleY = f.origin.y + f.size.height;
     }
     
     // Remove non-visible views from top
-    UIView *firstView = nil;
-    if ([_currentViews count] > 0) {
-        firstView = _currentViews[0];
-    }
-    while (firstView != nil && scrollY > firstView.frame.origin.y + firstView.frame.size.height) {
+    DTVTableViewItemHolder *firstItemHolder = [_currentViews firstObject];
+    BOOL removedItemsFromTop = FALSE;
+    while (firstItemHolder != nil && scrollY > CGRectGetMaxY(firstItemHolder.view.frame)) {
         _topVisibleRow++;
-        _topVisibleY += firstView.frame.size.height;
-        [firstView removeFromSuperview];
+        _topVisibleY = CGRectGetMaxY(firstItemHolder.view.frame);
+        [self prepareItemHolderForRemoval:firstItemHolder];
         [_currentViews removeObjectAtIndex:0];
         
-        if ([_currentViews count] > 0) {
-            firstView = _currentViews[0];
-        } else {
-            firstView = nil;
-        }
+        firstItemHolder = [_currentViews firstObject];
+        removedItemsFromTop = TRUE;
     }
     
     BOOL moveContent = FALSE;
     
     // Fill up remaining space on top
-    while (firstView != nil && scrollY < firstView.frame.origin.y && _topVisibleRow > 0) {
+    while (firstItemHolder != nil && scrollY < firstItemHolder.view.frame.origin.y && _topVisibleRow > 0 && _topVisibleRow <= _numberOfRows) {
         _topVisibleRow--;
-        UIView *v = [self.dataSource tableView:self cellForRow:_topVisibleRow convertView:nil];
-        CGRect f = v.frame;
-        f.size.width = self.bounds.size.width;
-        v.frame = f;
         
-        [v layoutIfNeeded];
-        
+        DTVTableViewItemHolder *itemHolder = [self itemHolderForRow:_topVisibleRow onYPosition:_topVisibleY];
+        UIView *view = itemHolder.view;
+        CGRect f = view.frame;
         _topVisibleY -= f.size.height;
         
-        f = v.frame;
         f.origin.y = _topVisibleY;
-        v.frame = f;
-        [self insertSubview:v atIndex:0];
+        view.frame = f;
+        [self insertSubview:view atIndex:0];
         
-        [_currentViews insertObject:v atIndex:0];
+        [_currentViews insertObject:itemHolder atIndex:0];
         
-        firstView = v;
+        firstItemHolder = itemHolder;
         if (_topVisibleY < _lastKnownAverageHeight * _topVisibleRow || (_topVisibleRow == 0 && _topVisibleY > 0)) {
             moveContent = TRUE;
         }
     }
     
+    if (_topVisibleRow > _numberOfRows * 2) {
+        moveContent = TRUE;
+    }
+    
     // Remove non-visible views from bottom
-    UIView *lastView = [_currentViews lastObject];
-    while (lastView != nil && lastView.frame.origin.y > scrollY + self.bounds.size.height) {
+    DTVTableViewItemHolder *lastItemHolder = [_currentViews lastObject];
+    while (lastItemHolder != nil && lastItemHolder.view.frame.origin.y > scrollY + self.bounds.size.height) {
         _bottomVisibleRow--;
-        _bottomVisibleY -= lastView.frame.size.height;
-        [lastView removeFromSuperview];
+        _bottomVisibleY = lastItemHolder.view.frame.origin.y;
+        [self prepareItemHolderForRemoval:lastItemHolder];
         [_currentViews removeLastObject];
-
-        lastView = [_currentViews lastObject];
+        
+        lastItemHolder = [_currentViews lastObject];
     }
     
     // Fill up remaining space on bottom
-    while (lastView != nil && lastView.frame.origin.y + lastView.frame.size.height < scrollY + self.bounds.size.height && _bottomVisibleRow < _numberOfRows - 1) {
+    while (lastItemHolder != nil && CGRectGetMaxY(lastItemHolder.view.frame) < scrollY + self.bounds.size.height && _bottomVisibleRow < _numberOfRows - 1 && _bottomVisibleRow >= -1) {
         _bottomVisibleRow++;
-        UIView *v = [self.dataSource tableView:self cellForRow:_bottomVisibleRow convertView:nil];
-        CGRect f = v.frame;
-        f.size.width = self.bounds.size.width;
-        v.frame = f;
         
-        [v layoutIfNeeded];
+        DTVTableViewItemHolder *itemHolder = [self itemHolderForRow:_bottomVisibleRow onYPosition:_bottomVisibleY];
+        UIView *view = itemHolder.view;
+        _bottomVisibleY = CGRectGetMaxY(view.frame);
+        [self insertSubview:view atIndex:0];
         
-        _bottomVisibleY += f.size.height;
-        
-        f = v.frame;
-        f.origin.y = _bottomVisibleY - f.size.height;
-        v.frame = f;
-        [self insertSubview:v atIndex:0];
-        
-        [_currentViews addObject:v];
-        lastView = v;
+        [_currentViews addObject:itemHolder];
+        lastItemHolder = itemHolder;
         
         if (_bottomVisibleY > _lastKnownAverageHeight * _numberOfRows || (_bottomVisibleRow == _numberOfRows-1 && _bottomVisibleY < self.contentSize.height)) {
             moveContent = TRUE;
         }
     }
-
-    // Update content size
-    CGFloat heightSum = 0;
-    NSInteger count = 0;
-    for (UIView *v in _currentViews) {
-        heightSum += v.frame.size.height;
-        count++;
-    }
-    CGFloat averageHeight = (NSInteger)(heightSum / count);
+    
     
     if (moveContent) {
-        _lastKnownAverageHeight = averageHeight;
-        
-        CGFloat firstIntraY = scrollY - firstView.frame.origin.y;
-        CGFloat newFirstY = _topVisibleRow * averageHeight;
-        CGFloat moveBy = (newFirstY + firstIntraY) - scrollY;
-        if (moveBy != 0.f) {
-            _topVisibleY += moveBy;
-            _bottomVisibleY += moveBy;
-            for (UIView *v in _currentViews) {
-                CGRect f = v.frame;
-                f.origin.y += moveBy;
-                v.frame = f;
-            }
-        }
-        self.contentSize = CGSizeMake(self.frame.size.width, averageHeight * _numberOfRows);
-        self.contentOffset = CGPointMake(self.contentOffset.x, firstIntraY + averageHeight * _topVisibleRow);
-        _topVisibleY = averageHeight * _topVisibleRow;
+        [self updateContentSizeAndMoveContent];
     } else {
         self.contentOffset = CGPointMake(self.contentOffset.x, scrollY);
     }
     
     _scrolling = FALSE;
+}
+
+- (void)updateContentSizeAndMoveContent {
+    CGFloat heightSum = 0;
+    NSInteger count = 0;
+    if ([[NSSet setWithArray:_currentViews] count] != _currentViews.count) {
+        NSLog(@"Double entries");
+    }
+    for (DTVTableViewItemHolder *v in _currentViews) {
+        heightSum += v.view.frame.size.height;
+        count++;
+    }
+    CGFloat averageHeight = _lastKnownAverageHeight;
+    if (count > 0) {
+        averageHeight = (heightSum / count);
+    } else if (averageHeight == 0) {
+        averageHeight = 44;
+    }
+    _lastKnownAverageHeight = averageHeight;
+    
+    DTVTableViewItemHolder *firstItemHolder = _currentViews.firstObject;
+    
+    CGFloat firstY = firstItemHolder.view.frame.origin.y;
+    CGFloat scrollY = self.contentOffset.y;
+    CGFloat distanceToScrollY = scrollY - firstItemHolder.view.frame.origin.y;
+    CGFloat newFirstY = _topVisibleRow * averageHeight;
+    CGFloat moveBy = newFirstY - firstY; //(newFirstY + distanceToScrollY) - scrollY;
+    if (moveBy != 0.f) {
+        _topVisibleY += moveBy;
+        _bottomVisibleY += moveBy;
+        for (DTVTableViewItemHolder *v in _currentViews) {
+            CGRect f = v.view.frame;
+            f.origin.y += moveBy;
+            v.view.frame = f;
+        }
+    }
+    self.contentSize = CGSizeMake(self.bounds.size.width, averageHeight * _numberOfRows);
+    self.contentOffset = CGPointMake(self.contentOffset.x, newFirstY + distanceToScrollY);
+    _topVisibleY = averageHeight * _topVisibleRow;
+    if (CGRectGetMaxY([_currentViews.lastObject view].frame) > self.contentSize.height) {
+        NSLog(@"Last view must be within content size");
+    }
+}
+
+- (void)prepareItemHolderForRemoval:(DTVTableViewItemHolder *)itemHolder {
+    if (itemHolder.reuseIdentifier.length > 0) {
+        [self enqueueReusableView:itemHolder.view forReuseIdentifier:itemHolder.reuseIdentifier];
+    }
+    [itemHolder.view removeFromSuperview];
+    itemHolder.view = nil;
+    [self enqueueReusableItemHolder:itemHolder];
 }
 
 @end

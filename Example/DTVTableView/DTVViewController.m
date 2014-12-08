@@ -19,6 +19,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self.tableView registerClass:[UILabel class] forViewReuseIdentifier:@"view"];
     self.tableView.dataSource = self;
 
 }
@@ -28,19 +29,30 @@
     return 500;
 }
 
-- (UITableViewCell *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row convertView:(UITableViewCell *)convertView {
-    UITableViewCell *ret = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+- (NSString *)tableView:(DTVTableView *)tableView reuseIdentifierForRow:(NSInteger)row {
+    return @"view";
+}
+
+- (UIView *)tableView:(DTVTableView *)tableView cellForRow:(NSInteger)row reuseView:(UIView *)reuseableView {
     CGFloat red = row % 3 / 3.f;
     CGFloat green = row % 5 / 5.f;
     CGFloat blue = row % 6 / 6.f;
     UIColor *color = [UIColor colorWithRed:red green:green blue:blue alpha:1];
-    ret.backgroundColor = color;
-    ret.frame = CGRectMake(0, 0, tableView.frame.size.width, (NSInteger)((arc4random() % (row+1))));
+    reuseableView.backgroundColor = color;
+    /*CGRect frame = reuseableView.frame;
+    frame.size.width = tableView.bounds.size.width;
+    frame.size.height = (NSInteger)((arc4random() % (row+1))+ 10);
+    reuseableView.frame = frame;*/
+    UILabel *label = (UILabel *)reuseableView;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.text = [NSString stringWithFormat:@"%d", row];
+    label.font = [UIFont systemFontOfSize:((arc4random() % (row+1))+ 10)];
+    [label sizeToFit];
     /*if (row % 10 == 0) {
      ret.frame = CGRectMake(0, 0, tableView.frame.size.width, 400);
      }*/
     
-    return ret;
+    return reuseableView;
 }
 
 @end
