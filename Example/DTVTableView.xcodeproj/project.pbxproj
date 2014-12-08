@@ -527,7 +527,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B599548C0B2A8E2E3BE06867 /* Pods-Tests.debug.xcconfig */;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DTVTableView.app/DTVTableView";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DTVTableViewExample.app/DTVTableViewExample";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -554,7 +554,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F689D386BC680250D4CF5433 /* Pods-Tests.release.xcconfig */;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DTVTableView.app/DTVTableView";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DTVTableViewExample.app/DTVTableViewExample";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
