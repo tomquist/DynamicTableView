@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5E0A0CFA48FF57014221DE4A /* libPods-DTVTableView.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 194C2671240232CD48D66938 /* libPods-DTVTableView.a */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
 		6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58F195388D20070C39A /* CoreGraphics.framework */; };
 		6003F592195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
@@ -79,7 +78,6 @@
 				6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */,
 				6003F592195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F58E195388D20070C39A /* Foundation.framework in Frameworks */,
-				5E0A0CFA48FF57014221DE4A /* libPods-DTVTableView.a in Frameworks */,
 				7C5E2C5FC4FE9FFFFD2AC67B /* libPods-DTVTableViewExample.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
